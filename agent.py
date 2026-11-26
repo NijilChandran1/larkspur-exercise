@@ -17,8 +17,34 @@ from support import (MODEL, SYSTEM_PROMPT, call_local, execute_tool, mcp_client,
 MAX_TOOL_CALLS = 8  # Larkspur's own build capped the loop here; then a human takes over.
 
 TONE_ADDENDUM = ""                       # ✏️ Build 4, step 4.1, intelligence goal
-EXTRA_TOOLS: List[Dict[str, Any]] = []   # ✏️ Build 2, step 2.1: schemas for the tools you add
-LOCAL_TOOLS: Dict[str, Any] = {}         # ✏️ Build 2, step 2.1: the functions behind them
+EXTRA_TOOLS: List[Dict[str, Any]] = [   # ✏️ Build 2, step 2.1: schemas for the tools you add
+    {
+        "name": "next_available_day",
+        "description": (
+            "Find the next available flight with open seats after a disrupted or cancelled "
+            "flight. Call it when the customer asks when the next flight is, or whether "
+            "there is room, space or seats for them (for example for a group of three). "
+            "The original flight is the disrupted one, so do not look for room on it: use "
+            "this tool to find the earliest date with an open seat, searching forward from "
+            "the original travel date. Note: it checks seats for one passenger only, not "
+            "for the whole party."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "origin": {"type": "string"},
+                "dest": {"type": "string"},
+                "date": {"type": "string"},
+                "cabin": {"type": "string"},
+            },
+            "required": ["origin", "dest", "date", "cabin"],
+        },
+    }
+]
+]
+LOCAL_TOOLS: Dict[str, Any] = {          # ✏️ Build 2, step 2.1: the functions behind them
+    "next_available_day": next_available_day,
+}
 
 
 def text_of(response) -> str:
