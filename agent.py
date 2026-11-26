@@ -60,6 +60,9 @@ def fare_rules(section: str) -> Any:
 
 
 EXTRA_TOOLS: List[Dict[str, Any]] = [   # ✏️ Build 2, step 2.1: schemas for the tools you add
+    # fare_rules and next_available_day now live on the MCP server (step 2.2).
+]
+_RETIRED_LOCAL_SCHEMAS: List[Dict[str, Any]] = [  # kept for reference only; not offered to Claude
     {
         "name": "fare_rules",
         "description": (
@@ -115,8 +118,7 @@ EXTRA_TOOLS: List[Dict[str, Any]] = [   # ✏️ Build 2, step 2.1: schemas for 
     },
 ]
 LOCAL_TOOLS: Dict[str, Any] = {         # ✏️ Build 2, step 2.1: the functions behind them
-    "fare_rules": fare_rules,
-    "next_available_day": next_available_day,
+    # empty: MCP owns fare_rules and next_available_day now
 }
 
 
@@ -180,7 +182,7 @@ def run_agent(pnr: str, last_name: str, message: str) -> str:            # ✏�
 def tool_list() -> List[Dict[str, Any]]:                   # ✏️ Build 2, step 2.2
     """Given. Exactly what Claude is offered on every turn; run.py --show-tools
     prints this list."""
-    return build_tools() + EXTRA_TOOLS
+    return build_tools() + EXTRA_TOOLS + mcp_client.tools()
 
 
 # ──────────────────────────────────────────────────────────────────────────────
