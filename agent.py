@@ -117,6 +117,8 @@ _RETIRED_LOCAL_SCHEMAS: List[Dict[str, Any]] = [  # kept for reference only; not
         },
     },
 ]
+
+LOCAL_TOOLS: Dict[str, Any] = {          # ✏️ Build 2, step 2.1: the functions behind them
 LOCAL_TOOLS: Dict[str, Any] = {         # ✏️ Build 2, step 2.1: the functions behind them
     # empty: MCP owns fare_rules and next_available_day now
 }
