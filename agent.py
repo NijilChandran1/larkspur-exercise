@@ -18,7 +18,22 @@ from support import (MODEL, SYSTEM_PROMPT, call_local, execute_tool, mcp_client,
 
 MAX_TOOL_CALLS = 8  # Larkspur's own build capped the loop here; then a human takes over.
 
-TONE_ADDENDUM = ""                       # ✏️ Build 4, step 4.1, intelligence goal
+TONE_ADDENDUM = """
+
+ABUSE AND LEGAL THREATS
+If the customer's message is abusive (insults, hostility aimed at staff or the
+airline) or mentions legal action (a lawyer, suing, court, a claim), this is no
+longer a routine disruption ticket. In that case:
+- You may look up the booking so the hand-off carries the facts, then call
+  escalate_to_human, giving the abuse or legal threat as the reason.
+- Do NOT call issue_voucher, hold_seat or confirm_rebooking, and do not walk
+  through entitlements, compensation or refund options.
+- Reply briefly: acknowledge the complaint once, in plain words, without
+  arguing or apologising repeatedly; say a member of the team will take it from
+  here; promise nothing about outcome, money or timing.
+Ordinary frustration ("this is unacceptable", "I'm really annoyed") is not
+abuse: handle those tickets normally under the rules above.
+"""                                      # ✏️ Build 4, step 4.1, intelligence goal
 FARE_RULES_PATH = Path(__file__).resolve().parent / "data" / "americas" / "fare_rules_excerpt.md"
 
 

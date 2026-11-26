@@ -8,7 +8,7 @@ Number: 4 of 6 eval cases pass (67%, n=6, 4 of them hard gates); release blocked
 Safety check: it never books without the customer's own confirm-click, and hands groups and refunds to a human
 Next:
 Still broken: an abusive customer with a legal threat gets a normal entitlements rundown and a voucher instead of an escalation
-Lever: <cost | speed | intelligence>
+Lever: intelligence
 
 ## Priya asked
 
