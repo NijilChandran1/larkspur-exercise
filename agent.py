@@ -91,9 +91,32 @@ EXTRA_TOOLS: List[Dict[str, Any]] = [   # ✏️ Build 2, step 2.1: schemas for 
             "required": ["section"],
         },
     },
+    {
+        "name": "next_available_day",
+        "description": (
+            "Find the next available flight with open seats after a disrupted or cancelled "
+            "flight. Call it when the customer asks when the next flight is, or whether "
+            "there is room, space or seats for them (for example for a group of three). "
+            "The original flight is the disrupted one, so do not look for room on it: use "
+            "this tool to find the earliest date with an open seat, searching forward from "
+            "the original travel date. Note: it checks seats for one passenger only, not "
+            "for the whole party."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "origin": {"type": "string"},
+                "dest": {"type": "string"},
+                "date": {"type": "string"},
+                "cabin": {"type": "string"},
+            },
+            "required": ["origin", "dest", "date", "cabin"],
+        },
+    },
 ]
 LOCAL_TOOLS: Dict[str, Any] = {         # ✏️ Build 2, step 2.1: the functions behind them
     "fare_rules": fare_rules,
+    "next_available_day": next_available_day,
 }
 
 
