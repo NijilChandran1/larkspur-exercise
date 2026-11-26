@@ -9,6 +9,8 @@ Where you edit:   grep -n '✏' agent.py   (six marks, one per place)
 Steps and gates:  https://anthropicpartnerbasecamp.bts.com/
 """
 from __future__ import annotations
+import re
+from pathlib import Path
 from typing import Any, Dict, List
 from support import (MODEL, SYSTEM_PROMPT, call_local, execute_tool, mcp_client,
                      new_session, next_available_day, record_tool_result,
@@ -17,8 +19,82 @@ from support import (MODEL, SYSTEM_PROMPT, call_local, execute_tool, mcp_client,
 MAX_TOOL_CALLS = 8  # Larkspur's own build capped the loop here; then a human takes over.
 
 TONE_ADDENDUM = ""                       # ✏️ Build 4, step 4.1, intelligence goal
-EXTRA_TOOLS: List[Dict[str, Any]] = []   # ✏️ Build 2, step 2.1: schemas for the tools you add
-LOCAL_TOOLS: Dict[str, Any] = {}         # ✏️ Build 2, step 2.1: the functions behind them
+FARE_RULES_PATH = Path(__file__).resolve().parent / "data" / "americas" / "fare_rules_excerpt.md"
+
+
+def fare_rules(section: str) -> Any:
+    """Return Larkspur Handbook text, verbatim from fare_rules_excerpt.md.
+    Matches a section number ("6"), then words in a heading ("care while you
+    wait"), then words in the body ("hotel"). Never invents text: no match, or
+    an unreadable file, comes back as an error naming the sections that exist."""
+    try:
+        text = FARE_RULES_PATH.read_text(encoding="utf-8")
+    except OSError as exc:
+        return {"error": "Handbook not readable at %s: %s" % (FARE_RULES_PATH, exc)}
+
+    sections = []  # (number, title, full text with heading)
+    for chunk in re.split(r"(?m)^### ", text)[1:]:
+        heading, _, body = chunk.partition("\n")
+        m = re.match(r"\s*(\d+)\.\s*(.*)", heading)
+        number, title = (m.group(1), m.group(2).strip()) if m else ("", heading.strip())
+        sections.append((number, title, "### %s\n%s" % (heading.strip(), body.strip())))
+    available = "; ".join("%s. %s" % (n, t) for n, t, _ in sections)
+    if not sections:
+        return {"error": "No sections found in %s." % FARE_RULES_PATH}
+
+    query = re.sub(r"^\s*section\s+", "", (section or "").strip().lower()).rstrip(".")
+    if not query:
+        return {"error": "section is required. Available sections: %s" % available}
+
+    hits = [s for n, _, s in sections if query == n]
+    if not hits:
+        hits = [s for _, t, s in sections if query in t.lower()]
+    if not hits:
+        words = [w for w in re.findall(r"[a-z0-9]+", query) if len(w) > 2]
+        hits = [s for _, _, s in sections if words and all(w in s.lower() for w in words)]
+    if not hits:
+        return {"error": "No Handbook section matches %r. Nothing in the Handbook "
+                         "excerpt answers this; do not state a rule for it. Available "
+                         "sections: %s" % (section, available)}
+    return "\n\n".join(hits)
+
+
+EXTRA_TOOLS: List[Dict[str, Any]] = [   # ✏️ Build 2, step 2.1: schemas for the tools you add
+    {
+        "name": "fare_rules",
+        "description": (
+            "Read the exact text of Larkspur's Customer Commitment Handbook (v14.3, sections "
+            "4 to 7): the written rules behind what check_policy decides. Use it when the "
+            "customer asks WHY they do or do not get something (\"why no hotel?\", \"why only "
+            "a meal voucher?\", \"why can't you refund me here?\") or challenges a policy, so "
+            "the answer quotes the Handbook instead of paraphrasing from memory. check_policy "
+            "says WHAT applies to this booking; this tool says WHY, in Larkspur's own words. "
+            "Sections: 4 Fare families; 5 When we delay, cancel or divert your flight; "
+            "6 Care while you wait (meals, hotel, ground transport, per passenger); "
+            "7 What chat automation will not do. Returns the full section text verbatim. If "
+            "nothing matches it returns an error listing the sections: then say the Handbook "
+            "excerpt does not cover it, never invent a rule."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "section": {
+                    "type": "string",
+                    "description": (
+                        "A section number (\"6\"), words from a section heading "
+                        "(\"care while you wait\"), or one topic word found in the text "
+                        "(\"hotel\", \"refund\"). For hotel, meal or ground care questions "
+                        "use \"6\"; for delay or cancellation rights use \"5\""
+                    ),
+                },
+            },
+            "required": ["section"],
+        },
+    },
+]
+LOCAL_TOOLS: Dict[str, Any] = {         # ✏️ Build 2, step 2.1: the functions behind them
+    "fare_rules": fare_rules,
+}
 
 
 def text_of(response) -> str:
